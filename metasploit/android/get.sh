@@ -13,6 +13,7 @@ USERNAME=""
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -u) USERNAME="$2"; shift ;;
+        -h|--help) usage ;;
         *) usage ;;
     esac
     shift
@@ -25,10 +26,9 @@ if [[ -z "$USERNAME" ]]; then
 fi
 
 # Directorio de destino en tu máquina
-DEST_DIR="$HOME/data/$USERNAME"
+DEST_DIR="./data/$USERNAME"
 
-# Crear el directorio de destino si no existe
-mkdir -p "$DEST_DIR"
+
 
 # Obtener el primer ID de sesión disponible
 SESSION_ID=$(msfconsole -q -x "sessions -l; exit" | awk '/^\s*[0-9]+/ {print $1; exit}')
@@ -38,6 +38,12 @@ if [ -z "$SESSION_ID" ]; then
     echo -e "\e[31mNo se encontró ninguna sesión activa.\e[0m"
     exit 1
 fi
+
+echo -e "\e[32mSe encontró una sesión activa con el ID $SESSION_ID.\e[0m"
+echo -e "\e[32mCreando el directorio de destino $DEST_DIR...\e[0m"
+
+# Crear el directorio de destino si no existe
+mkdir -p "$DEST_DIR"
 
 # Generar el archivo de recursos de Metasploit
 cat <<EOL > get.rc

