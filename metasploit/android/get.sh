@@ -2,7 +2,7 @@
 
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 -u <USERNAME>"
+    echo "Uso: $0 -u|-user <USERNAME>"
     exit 1
 }
 
@@ -12,7 +12,7 @@ USERNAME=""
 # Procesar argumentos de línea de comandos
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -u) USERNAME="$2"; shift ;;
+        -u|--user) USERNAME="$2"; shift ;;
         -h|--help) usage ;;
         *) usage ;;
     esac
@@ -27,8 +27,6 @@ fi
 
 # Directorio de destino en tu máquina
 DEST_DIR="./data/$USERNAME"
-
-
 
 # Obtener el primer ID de sesión disponible
 SESSION_ID=$(msfconsole -q -x "sessions -l; exit" | awk '/^\s*[0-9]+/ {print $1; exit}')

