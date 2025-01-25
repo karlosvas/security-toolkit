@@ -1,2 +1,3 @@
 *.rc
 .env
+node_modules

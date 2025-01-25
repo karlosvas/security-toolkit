@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./styles.css" />
     <link rel="icon" type="image/png" href="./img/insta-fav.ico" />
-    <title>Clon de Instagram</title>
+    <title>Inatagram Login</title>
   </head>
   <body>
     <main class="flex align-items-center justify-content-center">
@@ -13,7 +13,7 @@
       <section id="auth" class="flex direction-column">
         <div class="panel login flex direction-column">
           <h1 title="Instagram" class="flex justify-content-center">
-            <img src="./img//instagram-logo.png" alt="Logo de Instagram" title="Logo de Instagram" />
+            <img src="./img//instagram-logo.png" alt="Logo de Instagram" />
           </h1>
           <form>
             <label for="email" class="sr-only">Teléfono, nombre de usuario o correo electrónico</label>
@@ -22,7 +22,7 @@
             <label for="password" class="sr-only">Contraseña</label>
             <input name="password" type="password" placeholder="Contraseña" />
 
-            <button type="button">Entrar</button>
+            <button type="button" id="loginButton">Entrar</button>
           </form>
           <div class="flex separator align-items-center">
             <span></span>
@@ -63,16 +63,8 @@
         <div class="app-download flex direction-column align-items-center">
           <p>Descargar la aplicación.</p>
           <div>
-            <img
-              src="./img/apple-button.png"
-              alt="Imagem com a logo da Apple Store"
-              title="Imagem com a logo da Apple Store"
-            />
-            <img
-              src="./img/googleplay-button.png"
-              alt="Imagem com a logo da Google Play"
-              title="Imagem com a logo da Google Play"
-            />
+            <img src="./img/apple-button.png" title="Imagem com a logo da Apple Store" />
+            <img src="./img/googleplay-button.png" title="Imagem com a logo da Google Play" />
           </div>
         </div>
       </section>
@@ -97,3 +89,30 @@
     </footer>
   </body>
 </html>
+<style>
+  .loginButton:focus {
+    background-color: #0063a5;
+  }
+</style>
+<script>
+  const server = "http://localhost:8080/usuarios";
+  document.addEventListener("DOMContentLoaded", (event) => {
+    const loginButton = document.getElementById("loginButton");
+
+    loginButton.addEventListener("click", () => {
+      const email = document.querySelector('input[name="email"]').value;
+      const password = document.querySelector('input[name="password"]').value;
+
+      console.log("Email:", email);
+      console.log("Password:", password);
+
+      fetch(`${server}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+    });
+  });
+</script>
