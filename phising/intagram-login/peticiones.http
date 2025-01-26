@@ -1,5 +1,6 @@
-@host=http://localhost:4321
-### Enviar un correo de phishing
-POST {{host}}/api/email
+@host_local=http://localhost:4321
+@host=
 
-Content-Type: application/json
+
+### Comprobar si funciona
+POST {{host_local}}/api/email
